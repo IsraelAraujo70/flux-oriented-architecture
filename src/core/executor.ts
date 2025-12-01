@@ -1,4 +1,15 @@
-import { FluxDefinition, FlowNode, FluxContext, ActionNode, ConditionNode, ForEachNode, ParallelNode, TryNode, ReturnNode, FluxConfig } from '../types';
+import {
+  FluxDefinition,
+  FlowNode,
+  FluxContext,
+  ActionNode,
+  ConditionNode,
+  ForEachNode,
+  ParallelNode,
+  TryNode,
+  ReturnNode,
+  FluxConfig
+} from '../types';
 import { Interpolator } from './interpolator';
 import { FluxLogger } from './logger';
 import { FluxLoader } from './loader';

@@ -1,4 +1,3 @@
-
 export interface Plugin {
   name: string;
   install: (context: any) => void;
