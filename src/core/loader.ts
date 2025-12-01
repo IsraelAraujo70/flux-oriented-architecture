@@ -21,10 +21,10 @@ export class FluxLoader {
     try {
       // Load ts-node in transpile-only mode to allow .ts user actions without prebuild
       // Optional dependency for consumers; fail silently if not present.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('ts-node/register/transpile-only');
       this.tsNodeRegistered = true;
-    } catch (err) {
+    } catch (_err) {
       console.warn(
         'ts-node not found; TypeScript actions may fail to load. Install ts-node to enable.'
       );

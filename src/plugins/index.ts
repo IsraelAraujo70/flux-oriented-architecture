@@ -1,9 +1,3 @@
-export * from './database/index';
-export * from './cache/index';
-export * from './email/index';
-export * from './auth/index';
-
-import { FluxContext } from '../types';
 
 export interface Plugin {
   name: string;
@@ -14,6 +8,6 @@ export const registerPlugin = (plugin: Plugin) => {
   console.log(`Registered plugin: ${plugin.name}`);
 };
 
-export const usePlugin = (pluginName: string) => {
+export const usePlugin = (_pluginName: string) => {
   // Implementation
 };

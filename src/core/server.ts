@@ -26,7 +26,7 @@ export class FluxServer {
     try {
       const configContent = await fs.readFile(fullConfigPath, 'utf-8');
       this.config = JSON.parse(configContent);
-    } catch (error) {
+    } catch (_error) {
       console.error(`Could not load config from ${fullConfigPath}. Using defaults.`);
       this.config = {
         server: { port: 3000 },
@@ -110,7 +110,7 @@ export class FluxServer {
     // NOTE: This simple reload appends routes, it doesn't replace them.
     // A full restart is usually better for structural changes.
     // But let's at least re-register.
-    for (const flux of definitions) {
+    for (const _flux of definitions) {
       // In a real hot-reload implementation, we'd swap the router.
       // For now, we just log that we re-scanned.
     }

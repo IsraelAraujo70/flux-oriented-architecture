@@ -17,7 +17,7 @@ export function registerDevCommand(program: Command) {
       // Watch for changes
       const watchPaths = ['src/actions/**/*', 'src/flux/**/*'];
       const watcher = chokidar.watch(watchPaths, {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        ignored: /(^|[/\\])\../, // ignore dotfiles
         persistent: true,
         ignoreInitial: true
       });

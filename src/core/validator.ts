@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { FluxDefinition } from '../types';
+// import { FluxDefinition } from '../types';
 
 export class FluxValidator {
   private ajv: Ajv;

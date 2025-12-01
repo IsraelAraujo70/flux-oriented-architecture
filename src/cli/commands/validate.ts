@@ -21,7 +21,7 @@ export function registerValidateCommand(program: Command) {
         const configPath = path.resolve(process.cwd(), 'foa.config.json');
         const content = await fs.readFile(configPath, 'utf-8');
         config = JSON.parse(content);
-      } catch (e) {
+      } catch (_e) {
         // ignore, use defaults
       }
 
