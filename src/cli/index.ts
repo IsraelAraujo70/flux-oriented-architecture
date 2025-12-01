@@ -2,14 +2,11 @@ import { Command } from 'commander';
 import { registerDevCommand } from './commands/dev';
 import { registerStartCommand } from './commands/start';
 import { registerValidateCommand } from './commands/validate';
-import { registerListCommand } from './commands/list'; 
+import { registerListCommand } from './commands/list';
 
 export const program = new Command();
 
-program
-  .name('foa')
-  .description('Flux-Oriented Architecture CLI')
-  .version('1.0.0');
+program.name('foa').description('Flux-Oriented Architecture CLI').version('1.0.0');
 
 registerDevCommand(program);
 registerStartCommand(program);

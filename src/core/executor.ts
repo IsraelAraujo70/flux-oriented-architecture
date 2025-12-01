@@ -1,5 +1,16 @@
 import { Response } from 'express';
-import { FluxDefinition, FlowNode, FluxContext, ActionNode, ConditionNode, ForEachNode, ParallelNode, TryNode, ReturnNode, FluxConfig } from '../types';
+import {
+  FluxDefinition,
+  FlowNode,
+  FluxContext,
+  ActionNode,
+  ConditionNode,
+  ForEachNode,
+  ParallelNode,
+  TryNode,
+  ReturnNode,
+  FluxConfig
+} from '../types';
 import { Interpolator } from './interpolator';
 import { FluxLogger } from './logger';
 import { FluxLoader } from './loader';
@@ -18,24 +29,24 @@ export class FluxExecutor {
   async executeFlux(flux: FluxDefinition, context: FluxContext) {
     try {
       this.logger.info(`Starting flow: ${flux.method} ${flux.endpoint}`);
-      
+
       for (const node of flux.flow) {
         const shouldReturn = await this.executeNode(node, context);
         if (shouldReturn) {
-           // If executeNode returns true (signaling a return action was executed), we stop the flow.
-           // However, the ReturnNode logic handles sending the response.
-           // We just need to break the loop.
-           break;
+          // If executeNode returns true (signaling a return action was executed), we stop the flow.
+          // However, the ReturnNode logic handles sending the response.
+          // We just need to break the loop.
+          break;
         }
         // Check if response was already sent by a return node or manual intervention
         if (context.res.headersSent) {
           break;
         }
       }
-      
+
       // If we reached the end and no response sent, send 200 OK with last result or empty
       if (!context.res.headersSent) {
-         context.res.status(200).send({ success: true });
+        context.res.status(200).send({ success: true });
       }
 
       this.logger.info(`Flow completed: ${flux.endpoint}`);
@@ -73,13 +84,13 @@ export class FluxExecutor {
 
   private async executeAction(node: ActionNode, context: FluxContext) {
     const action = this.loader.getAction(node.path);
-    
+
     if (!action) {
       throw new Error(`Action not found: ${node.path}`);
     }
 
     this.logger.debug(`Executing action: ${node.name}`);
-    
+
     // Resolve arguments
     if (node.args) {
       const resolvedArgs: Record<string, any> = {};
@@ -94,9 +105,9 @@ export class FluxExecutor {
     const startTime = Date.now();
     const result = await action(context);
     const duration = Date.now() - startTime;
-    
+
     this.logger.debug(`Action completed: ${node.name} (${duration}ms)`);
-    
+
     // Store result for downstream nodes
     context.results[node.name] = result;
     // Convenience: also expose directly on context to allow "${foo}" style
@@ -107,7 +118,7 @@ export class FluxExecutor {
   private async executeCondition(node: ConditionNode, context: FluxContext) {
     const condition = this.interpolator.resolve(node.if, context);
     this.logger.debug(`Condition: ${node.if} = ${condition}`);
-    
+
     if (condition) {
       for (const n of node.then) {
         if (await this.executeNode(n, context)) return;
@@ -121,7 +132,7 @@ export class FluxExecutor {
 
   private async executeForEach(node: ForEachNode, context: FluxContext) {
     const items = this.interpolator.resolve(node.items, context);
-    
+
     if (!Array.isArray(items)) {
       this.logger.warn(`ForEach: ${node.items} is not an array`);
       return;
@@ -130,12 +141,12 @@ export class FluxExecutor {
     for (const item of items) {
       // Inject current item into context
       context[node.as] = item;
-      
+
       for (const n of node.do) {
         if (await this.executeNode(n, context)) return;
       }
     }
-    
+
     // Clean up
     delete context[node.as];
   }
@@ -171,7 +182,7 @@ export class FluxExecutor {
   private async executeReturn(node: ReturnNode, context: FluxContext) {
     const body = node.body ? this.interpolator.resolve(node.body, context) : undefined;
     const status = node.status || 200;
-    
+
     context.res.status(status).send(body);
   }
 }

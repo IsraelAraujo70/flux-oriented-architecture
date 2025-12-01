@@ -69,8 +69,15 @@ export class FluxServer {
   }
 
   private registerEndpoint(flux: FluxDefinition) {
-    const method = flux.method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
-    
+    const method = flux.method.toLowerCase() as
+      | 'get'
+      | 'post'
+      | 'put'
+      | 'delete'
+      | 'patch'
+      | 'options'
+      | 'head';
+
     this.app[method](flux.endpoint, async (req: Request, res: Response) => {
       const context: FluxContext = {
         req,
@@ -89,23 +96,23 @@ export class FluxServer {
   // For dev mode: reload everything
   async reload() {
     this.logger.info('Reloading configuration and routes...');
-    // In a real scenario, we might need to close the server and restart, 
+    // In a real scenario, we might need to close the server and restart,
     // or just clear the router stack.
     // Express doesn't make it super easy to unregister routes.
     // For simplicity in this prototype, we'll just re-load actions/flux
     // Note: This won't clear old routes in Express effectively without more logic.
     // A better approach for dev/hot-reload is to use a router that we replace.
-    
+
     // Re-load loader
     await this.loader.loadActions();
     const definitions = await this.loader.loadFluxDefinitions();
-    
+
     // NOTE: This simple reload appends routes, it doesn't replace them.
     // A full restart is usually better for structural changes.
     // But let's at least re-register.
     for (const flux of definitions) {
-       // In a real hot-reload implementation, we'd swap the router.
-       // For now, we just log that we re-scanned.
+      // In a real hot-reload implementation, we'd swap the router.
+      // For now, we just log that we re-scanned.
     }
     this.logger.info('Reload complete (Note: Route changes may require restart)');
   }

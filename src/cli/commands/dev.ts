@@ -9,9 +9,9 @@ export function registerDevCommand(program: Command) {
     .option('-p, --port <port>', 'Port to listen on')
     .action(async (options) => {
       console.log('Starting FOA in development mode...');
-      
+
       const server = new FluxServer();
-      
+
       await server.start({ port: options.port ? Number(options.port) : undefined });
 
       // Watch for changes
@@ -26,12 +26,12 @@ export function registerDevCommand(program: Command) {
         console.log(`File changed: ${path}`);
         console.log('Reloading server...');
         try {
-            await server.reload();
+          await server.reload();
         } catch (err) {
-            console.error('Error reloading server:', err);
+          console.error('Error reloading server:', err);
         }
       });
-      
+
       watcher.on('add', async (path) => {
         console.log(`File added: ${path}`);
         await server.reload();

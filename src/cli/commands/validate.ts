@@ -22,7 +22,7 @@ export function registerValidateCommand(program: Command) {
         const content = await fs.readFile(configPath, 'utf-8');
         config = JSON.parse(content);
       } catch (e) {
-         // ignore, use defaults
+        // ignore, use defaults
       }
 
       const loader = new FluxLoader(config);
@@ -35,7 +35,7 @@ export function registerValidateCommand(program: Command) {
           console.error(`- ${err.file}: ${err.errors.join(', ')}`);
         });
       }
-      
+
       if (definitions.length === 0) {
         console.warn('No valid flux definitions found (or directory empty).');
       } else {

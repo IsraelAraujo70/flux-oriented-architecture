@@ -11,7 +11,10 @@ export class FluxValidator {
       type: 'object',
       properties: {
         endpoint: { type: 'string' },
-        method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
+        method: {
+          type: 'string',
+          enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']
+        },
         description: { type: 'string' },
         flow: {
           type: 'array',
@@ -90,7 +93,7 @@ export class FluxValidator {
           properties: {
             type: { const: 'return' },
             status: { type: 'number' },
-            body: { }
+            body: {}
           },
           required: ['type', 'body']
         }
@@ -101,11 +104,11 @@ export class FluxValidator {
   validate(definition: any): { valid: boolean; errors: string[] } {
     const validate = this.ajv.compile(this.schema);
     const valid = validate(definition);
-    
+
     if (!valid) {
       return {
         valid: false,
-        errors: validate.errors?.map(e => `${e.instancePath} ${e.message}`) || ['Unknown error']
+        errors: validate.errors?.map((e) => `${e.instancePath} ${e.message}`) || ['Unknown error']
       };
     }
 

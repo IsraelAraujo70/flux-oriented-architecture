@@ -17,9 +17,7 @@ export class FluxLogger {
           return `${timestamp} [${level}]: ${message} ${metaString}`;
         })
       ),
-      transports: [
-        new winston.transports.Console()
-      ]
+      transports: [new winston.transports.Console()]
     });
   }
 

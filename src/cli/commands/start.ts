@@ -8,9 +8,9 @@ export function registerStartCommand(program: Command) {
     .option('-p, --port <port>', 'Port to listen on')
     .action(async (options) => {
       console.log('Starting FOA server...');
-      
+
       const server = new FluxServer();
-      
+
       try {
         await server.start({ port: options.port ? Number(options.port) : undefined });
       } catch (error) {

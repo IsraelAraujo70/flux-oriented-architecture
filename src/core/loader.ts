@@ -25,7 +25,9 @@ export class FluxLoader {
       require('ts-node/register/transpile-only');
       this.tsNodeRegistered = true;
     } catch (err) {
-      console.warn('ts-node not found; TypeScript actions may fail to load. Install ts-node to enable.');
+      console.warn(
+        'ts-node not found; TypeScript actions may fail to load. Install ts-node to enable.'
+      );
       this.tsNodeRegistered = true; // avoid spamming
     }
   }
@@ -33,7 +35,7 @@ export class FluxLoader {
   async loadActions(): Promise<Map<string, ActionFunction>> {
     const actionsPath = path.resolve(process.cwd(), this.config.paths.actions);
     this.actions.clear();
-    
+
     // Ensure directory exists
     try {
       await fs.access(actionsPath);
@@ -43,7 +45,7 @@ export class FluxLoader {
     }
 
     const files = await glob(`${actionsPath}/**/*.{ts,js}`, { windowsPathsNoEscape: true });
-    
+
     for (const file of files) {
       const isTs = file.endsWith('.ts');
       if (isTs) {
@@ -55,12 +57,12 @@ export class FluxLoader {
       // then remove extension -> users/create
       const relativePath = path.relative(actionsPath, file);
       const actionKey = relativePath.replace(/\\/g, '/').replace(/\.(ts|js)$/, '');
-      
+
       try {
         // Dynamic import
         const module = await import(file);
         const actionFunction = module.default || module;
-        
+
         if (typeof actionFunction === 'function') {
           this.actions.set(actionKey, actionFunction);
         } else {
@@ -70,14 +72,14 @@ export class FluxLoader {
         console.error(`Error loading action ${file}:`, error);
       }
     }
-    
+
     return this.actions;
   }
 
   async loadFluxDefinitions(): Promise<FluxDefinition[]> {
     const fluxPath = path.resolve(process.cwd(), this.config.paths.flux);
     this.fluxErrors = [];
-    
+
     try {
       await fs.access(fluxPath);
     } catch {
@@ -86,13 +88,13 @@ export class FluxLoader {
     }
 
     const files = await glob(`${fluxPath}/**/*.json`, { windowsPathsNoEscape: true });
-    
+
     const definitions: FluxDefinition[] = [];
     for (const file of files) {
       try {
         const content = await fs.readFile(file, 'utf-8');
         const definition = JSON.parse(content);
-        
+
         const validation = this.validator.validate(definition);
         if (validation.valid) {
           definitions.push(definition);
@@ -106,7 +108,7 @@ export class FluxLoader {
         console.error(`Error loading flux definition ${file}:`, error);
       }
     }
-    
+
     return definitions;
   }
 
