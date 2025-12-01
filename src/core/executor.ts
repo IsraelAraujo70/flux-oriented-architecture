@@ -97,8 +97,10 @@ export class FluxExecutor {
     
     this.logger.debug(`Action completed: ${node.name} (${duration}ms)`);
     
-    // Store result
+    // Store result for downstream nodes
     context.results[node.name] = result;
+    // Convenience: also expose directly on context to allow "${foo}" style
+    context[node.name] = result;
     delete context.args;
   }
 
