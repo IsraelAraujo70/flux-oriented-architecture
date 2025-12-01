@@ -1,0 +1,17 @@
+{
+  "endpoint": "/cep/:cep",
+  "method": "GET",
+  "description": "Consulta CEP via ViaCEP",
+  "flow": [
+    {
+      "type": "action",
+      "name": "cepData",
+      "path": "fetchCep"
+    },
+    {
+      "type": "return",
+      "status": 200,
+      "body": "${cepData}"
+    }
+  ]
+}

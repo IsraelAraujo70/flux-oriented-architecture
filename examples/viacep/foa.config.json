@@ -1,0 +1,12 @@
+{
+  "server": {
+    "port": 3333
+  },
+  "paths": {
+    "actions": "src/actions",
+    "flux": "src/flux"
+  },
+  "logging": {
+    "level": "info"
+  }
+}
