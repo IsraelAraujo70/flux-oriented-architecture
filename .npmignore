@@ -1,0 +1,10 @@
+src
+.tests
+coverage
+node_modules
+examples
+*.log
+npm-debug.log*
+.git
+.github
+tsconfig.json

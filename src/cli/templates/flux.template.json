@@ -1,0 +1,16 @@
+{
+  "endpoint": "/hello",
+  "method": "GET",
+  "description": "Example flux flow",
+  "flow": [
+    {
+      "type": "action",
+      "name": "hello",
+      "path": "example/hello"
+    },
+    {
+      "type": "return",
+      "body": "${hello}"
+    }
+  ]
+}
