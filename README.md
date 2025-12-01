@@ -1,6 +1,6 @@
 # Flux-Oriented Architecture (FOA)
 
-![Status Checks](https://github.com/yourusername/flux-oriented-architecture/actions/workflows/ci.yml/badge.svg)
+![Status Checks](https://github.com/IsraelAraujo70/flux-oriented-architecture/actions/workflows/ci.yml/badge.svg)
 
 Backend framework with declarative flow orchestration.
 
