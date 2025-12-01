@@ -9,10 +9,25 @@ export class FluxLoader {
   private config: FluxConfig;
   private validator: FluxValidator;
   private fluxErrors: { file: string; errors: string[] }[] = [];
+  private tsNodeRegistered = false;
 
   constructor(config: FluxConfig) {
     this.config = config;
     this.validator = new FluxValidator();
+  }
+
+  private ensureTsNode() {
+    if (this.tsNodeRegistered) return;
+    try {
+      // Load ts-node in transpile-only mode to allow .ts user actions without prebuild
+      // Optional dependency for consumers; fail silently if not present.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require('ts-node/register/transpile-only');
+      this.tsNodeRegistered = true;
+    } catch (err) {
+      console.warn('ts-node not found; TypeScript actions may fail to load. Install ts-node to enable.');
+      this.tsNodeRegistered = true; // avoid spamming
+    }
   }
 
   async loadActions(): Promise<Map<string, ActionFunction>> {
@@ -30,6 +45,11 @@ export class FluxLoader {
     const files = await glob(`${actionsPath}/**/*.{ts,js}`, { windowsPathsNoEscape: true });
     
     for (const file of files) {
+      const isTs = file.endsWith('.ts');
+      if (isTs) {
+        this.ensureTsNode();
+      }
+
       // Convert absolute path to relative path from actions root
       // e.g. /app/src/actions/users/create.ts -> users/create.ts
       // then remove extension -> users/create

@@ -1,5 +1,6 @@
-// CJS-friendly action; dynamic import will pick module.exports as default
-module.exports = async function fetchCep(context) {
+type FluxContext = any;
+
+export default async function fetchCep(context: FluxContext) {
   const cep = (context.input?.cep || '').replace(/\D/g, '');
   if (!cep || cep.length !== 8) {
     throw new Error('CEP inválido. Use 8 dígitos.');
@@ -12,9 +13,9 @@ module.exports = async function fetchCep(context) {
   }
   const data = await res.json();
 
-  if (data.erro) {
+  if ((data as any).erro) {
     throw new Error('CEP não encontrado');
   }
 
   return data;
-};
+}
