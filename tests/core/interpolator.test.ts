@@ -20,6 +20,7 @@ describe("Interpolator", () => {
       },
       results: {},
       state: {},
+      plugins: {},
       someValue: "direct",
       someArray: [1, 2, 3],
     };

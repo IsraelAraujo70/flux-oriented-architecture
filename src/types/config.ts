@@ -10,4 +10,5 @@ export interface FluxConfig {
   logging?: {
     level: 'debug' | 'info' | 'warn' | 'error';
   };
+  plugins?: Record<string, any>;
 }

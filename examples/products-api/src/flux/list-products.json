@@ -1,0 +1,20 @@
+{
+  "endpoint": "/products",
+  "method": "GET",
+  "description": "List all products",
+  "flow": [
+    {
+      "type": "action",
+      "name": "products",
+      "path": "product/listProducts"
+    },
+    {
+      "type": "return",
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": "${products}"
+      }
+    }
+  ]
+}

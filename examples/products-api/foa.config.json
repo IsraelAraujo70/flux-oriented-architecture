@@ -1,0 +1,18 @@
+{
+  "server": {
+    "port": 3001
+  },
+  "paths": {
+    "actions": "src/actions",
+    "flux": "src/flux"
+  },
+  "logging": {
+    "level": "info"
+  },
+  "plugins": {
+    "database": {
+      "type": "postgres",
+      "connectionString": "${DATABASE_URL}"
+    }
+  }
+}

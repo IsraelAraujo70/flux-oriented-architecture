@@ -5,6 +5,9 @@ import { FluxConfig, FluxContext, FluxDefinition } from '../types';
 import { FluxLoader } from './loader';
 import { FluxExecutor } from './executor';
 import { FluxLogger } from './logger';
+import { PostgresPlugin } from '../plugins/database/postgres';
+import { IPlugin } from './ports/IPlugin';
+import { resolveEnvVariables } from './environment';
 
 export class FluxServer {
   private app: express.Application;
@@ -13,6 +16,7 @@ export class FluxServer {
   private executor!: FluxExecutor;
   private logger!: FluxLogger;
   private configPath: string;
+  private plugins: Map<string, IPlugin> = new Map();
 
   constructor(configPath?: string) {
     this.app = express();
@@ -25,7 +29,9 @@ export class FluxServer {
     const fullConfigPath = path.resolve(process.cwd(), this.configPath);
     try {
       const configContent = await fs.readFile(fullConfigPath, 'utf-8');
-      this.config = JSON.parse(configContent);
+      const rawConfig = JSON.parse(configContent);
+      // Resolve environment variables (e.g., ${DATABASE_URL} -> actual value)
+      this.config = resolveEnvVariables<FluxConfig>(rawConfig);
     } catch (_error) {
       console.error(`Could not load config from ${fullConfigPath}. Using defaults.`);
       this.config = {
@@ -37,7 +43,26 @@ export class FluxServer {
 
     this.logger = new FluxLogger(this.config.logging);
     this.loader = new FluxLoader(this.config);
-    this.executor = new FluxExecutor(this.config, this.loader);
+
+    // Load Plugins
+    if (this.config.plugins) {
+      for (const [key, pluginConfig] of Object.entries(this.config.plugins)) {
+        let plugin: IPlugin | null = null;
+
+        // TODO: Dynamic loading based on plugin registry or package name
+        if (key === 'database' && pluginConfig.type === 'postgres') {
+          plugin = new PostgresPlugin();
+        }
+
+        if (plugin) {
+          this.logger.info(`Initializing plugin: ${plugin.name}`);
+          await plugin.setup(pluginConfig);
+          this.plugins.set(plugin.name, plugin);
+        }
+      }
+    }
+
+    this.executor = new FluxExecutor(this.config, this.loader, this.plugins);
   }
 
   async start(options?: { port?: number }) {
@@ -84,7 +109,8 @@ export class FluxServer {
         res,
         input: { ...req.body, ...req.query, ...req.params },
         results: {},
-        state: {}
+        state: {},
+        plugins: {}
       };
 
       await this.executor.executeFlux(flux, context);
@@ -96,23 +122,12 @@ export class FluxServer {
   // For dev mode: reload everything
   async reload() {
     this.logger.info('Reloading configuration and routes...');
-    // In a real scenario, we might need to close the server and restart,
-    // or just clear the router stack.
-    // Express doesn't make it super easy to unregister routes.
-    // For simplicity in this prototype, we'll just re-load actions/flux
-    // Note: This won't clear old routes in Express effectively without more logic.
-    // A better approach for dev/hot-reload is to use a router that we replace.
 
     // Re-load loader
     await this.loader.loadActions();
     const definitions = await this.loader.loadFluxDefinitions();
-
-    // NOTE: This simple reload appends routes, it doesn't replace them.
-    // A full restart is usually better for structural changes.
-    // But let's at least re-register.
     for (const _flux of definitions) {
-      // In a real hot-reload implementation, we'd swap the router.
-      // For now, we just log that we re-scanned.
+      //TODO: Implement route replacement logic here
     }
     this.logger.info('Reload complete (Note: Route changes may require restart)');
   }
