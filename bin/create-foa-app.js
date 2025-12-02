@@ -4,84 +4,94 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const projectDir = process.argv[2] || '.';
-const absolutePath = path.resolve(process.cwd(), projectDir);
+// Check for arguments
+if (process.argv.length > 2) {
+  console.error('\x1b[31mError: Arguments are no longer supported.\x1b[0m');
+  console.error(
+    'Please create a directory, cd into it, and run "create-foa-app" (or "npx create-foa-app").'
+  );
+  console.error('\nExample:');
+  console.error('  mkdir my-api');
+  console.error('  cd my-api');
+  console.error('  npx create-foa-app');
+  process.exit(1);
+}
+
+const absolutePath = process.cwd();
 
 console.log(`Creating FOA app in ${absolutePath}...`);
 
 // Create directories
-const dirs = [
-  'src/actions',
-  'src/flux'
-];
+const dirs = ['src/actions', 'src/flux'];
 
-dirs.forEach(dir => {
+dirs.forEach((dir) => {
   const fullPath = path.join(absolutePath, dir);
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
   }
 });
 
-// Copy templates
-// Note: In a real package, templates should be copied from dist/cli/templates or similar
-// We will create them inline for simplicity here, or read from the package structure if we knew where dist was relative to this script.
-// Since this is bin/create-foa-app.js, and package structure is:
-// root/
-//   bin/
-//   dist/
-//     cli/
-//       templates/
-
-const templateDir = path.join(__dirname, '../dist/cli/templates');
-
-function copyTemplate(templateName, targetPath) {
-  try {
-    const content = fs.readFileSync(path.join(templateDir, templateName), 'utf-8');
-    fs.writeFileSync(path.join(absolutePath, targetPath), content);
-  } catch (e) {
-    console.warn(`Could not copy template ${templateName}: ${e.message}`);
-    // Fallback to writing default content if template file missing in dev
-  }
-}
-
-// We'll just write default content directly to be safe
-const packageJson = {
+// Create package.json
+const packageJsonPath = path.join(absolutePath, 'package.json');
+let packageJson = {
   name: path.basename(absolutePath),
-  version: "1.0.0",
+  version: '1.0.0',
   scripts: {
-    "dev": "foa dev",
-    "start": "foa start"
+    dev: 'foa dev',
+    start: 'foa start',
+    validate: 'foa validate',
+    list: 'foa list'
   },
   dependencies: {
-    "flux-oriented-architecture": "latest" 
+    'flux-oriented-architecture': 'latest'
   }
 };
+
+if (fs.existsSync(packageJsonPath)) {
+  console.log('package.json already exists, updating scripts and dependencies...');
+  try {
+    const existingPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    packageJson = {
+      ...existingPackageJson,
+      scripts: {
+        ...existingPackageJson.scripts,
+        ...packageJson.scripts
+      },
+      dependencies: {
+        ...existingPackageJson.dependencies,
+        ...packageJson.dependencies
+      }
+    };
+  } catch (e) {
+    console.warn('Could not parse existing package.json, skipping update.');
+  }
+}
 
 fs.writeFileSync(path.join(absolutePath, 'package.json'), JSON.stringify(packageJson, null, 2));
 
 const tsConfig = {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+  compilerOptions: {
+    target: 'ES2020',
+    module: 'commonjs',
+    strict: true,
+    esModuleInterop: true,
+    skipLibCheck: true,
+    forceConsistentCasingInFileNames: true
   }
 };
 
 fs.writeFileSync(path.join(absolutePath, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
 
 const foaConfig = {
-  "server": {
-    "port": 3000
+  server: {
+    port: 3000
   },
-  "paths": {
-    "actions": "src/actions",
-    "flux": "src/flux"
+  paths: {
+    actions: 'src/actions',
+    flux: 'src/flux'
   },
-  "logging": {
-    "level": "info"
+  logging: {
+    level: 'info'
   }
 };
 
@@ -102,22 +112,25 @@ fs.writeFileSync(path.join(absolutePath, 'src/actions/hello.ts'), exampleAction.
 
 // Create example flux
 const exampleFlux = {
-  "endpoint": "/hello",
-  "method": "GET",
-  "description": "Example endpoint",
-  "flow": [
+  endpoint: '/hello',
+  method: 'GET',
+  description: 'Example endpoint',
+  flow: [
     {
-      "type": "action",
-      "name": "result",
-      "path": "hello"
+      type: 'action',
+      name: 'result',
+      path: 'hello'
     },
     {
-      "type": "return",
-      "body": "${result}"
+      type: 'return',
+      body: '${result}'
     }
   ]
 };
-fs.writeFileSync(path.join(absolutePath, 'src/flux/hello.json'), JSON.stringify(exampleFlux, null, 2));
+fs.writeFileSync(
+  path.join(absolutePath, 'src/flux/hello.json'),
+  JSON.stringify(exampleFlux, null, 2)
+);
 
 console.log('Installing dependencies...');
 try {
@@ -127,5 +140,4 @@ try {
 }
 
 console.log('\nDone! To start your server:');
-console.log(`cd ${projectDir}`);
 console.log('npm run dev');
