@@ -32,7 +32,11 @@ export interface PaginatedResponse<T = any> {
 /**
  * Create a success response
  */
-export function success<T = any>(data: T, message?: string, meta?: Record<string, any>): SuccessResponse<T> {
+export function success<T = any>(
+  data: T,
+  message?: string,
+  meta?: Record<string, any>
+): SuccessResponse<T> {
   const response: SuccessResponse<T> = {
     success: true,
     data
@@ -165,9 +169,6 @@ export const HttpStatus = {
 /**
  * Create a response with custom status
  */
-export function createResponse<T = any>(
-  statusCode: number,
-  body: T
-): { status: number; body: T } {
+export function createResponse<T = any>(statusCode: number, body: T): { status: number; body: T } {
   return { status: statusCode, body };
 }

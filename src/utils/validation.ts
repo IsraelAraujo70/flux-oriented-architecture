@@ -23,10 +23,7 @@ export class ValidationException extends Error {
 /**
  * Validate required fields in an object
  */
-export function validateRequired(
-  data: Record<string, any>,
-  fields: string[]
-): ValidationError[] {
+export function validateRequired(data: Record<string, any>, fields: string[]): ValidationError[] {
   const errors: ValidationError[] = [];
 
   for (const field of fields) {
@@ -279,10 +276,7 @@ export function validate(data: Record<string, any>, schema: ValidationSchema): V
 /**
  * Validate and throw if errors exist
  */
-export function validateOrThrow(
-  data: Record<string, any>,
-  schema: ValidationSchema
-): void {
+export function validateOrThrow(data: Record<string, any>, schema: ValidationSchema): void {
   const errors = validate(data, schema);
 
   if (errors.length > 0) {
