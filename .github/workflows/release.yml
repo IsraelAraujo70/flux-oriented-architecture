@@ -9,8 +9,6 @@ jobs:
   release:
     name: Release & Publish to NPM
     runs-on: ubuntu-latest
-    # Skip if commit message contains [skip ci] or chore(release)
-    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'chore(release)')"
     permissions:
       contents: write
       packages: write
@@ -22,7 +20,41 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
 
+      - name: Check if should release
+        id: should_release
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          # Skip if contains [skip ci]
+          if [[ $COMMIT_MSG =~ \[skip\ ci\] ]]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "reason=skip-ci" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Skip if is a release commit
+          if [[ $COMMIT_MSG =~ ^chore\(release\): ]]; then
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "reason=release-commit" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Only release on feat, fix, or breaking changes
+          if [[ $COMMIT_MSG =~ ^feat(\(.*\))?!: ]] || \
+             [[ $COMMIT_MSG =~ ^feat(\(.*\))?: ]] || \
+             [[ $COMMIT_MSG =~ ^fix(\(.*\))?: ]] || \
+             [[ $COMMIT_MSG =~ ^BREAKING[[:space:]]CHANGE: ]] || \
+             [[ $COMMIT_MSG =~ \[breaking\] ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "✅ Commit triggers release"
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "reason=non-release-commit" >> $GITHUB_OUTPUT
+            echo "⏭️  Skipping release (commit type: ${COMMIT_MSG%%:*})"
+          fi
+
       - name: Setup Node.js
+        if: steps.should_release.outputs.should_release == 'true'
         uses: actions/setup-node@v3
         with:
           node-version: '18'
@@ -30,70 +62,83 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.should_release.outputs.should_release == 'true'
         run: npm ci
 
       - name: Run tests
+        if: steps.should_release.outputs.should_release == 'true'
         run: npm run test:coverage
 
       - name: Build
+        if: steps.should_release.outputs.should_release == 'true'
         run: npm run build
 
       - name: Configure Git
+        if: steps.should_release.outputs.should_release == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Determine version bump and update package.json
+      - name: Determine version bump
+        if: steps.should_release.outputs.should_release == 'true'
         id: version
         run: |
-          # Get commit message to determine version bump type
           COMMIT_MSG=$(git log -1 --pretty=%B)
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
 
           if [[ $COMMIT_MSG =~ ^feat(\(.*\))?!:|^BREAKING[[:space:]]CHANGE: ]] || [[ $COMMIT_MSG =~ \[breaking\] ]]; then
             VERSION_TYPE="major"
           elif [[ $COMMIT_MSG =~ ^feat(\(.*\))?: ]]; then
             VERSION_TYPE="minor"
+          elif [[ $COMMIT_MSG =~ ^fix(\(.*\))?: ]]; then
+            VERSION_TYPE="patch"
           else
             VERSION_TYPE="patch"
           fi
 
-          echo "🔼 Bumping $VERSION_TYPE version"
+          echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "🔼 Bumping $VERSION_TYPE version from $CURRENT_VERSION"
 
-          # Delete tag locally if it exists (to handle re-runs)
-          NEXT_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
-          git tag -d "v${NEXT_VERSION#v}" 2>/dev/null || true
+      - name: Bump version
+        if: steps.should_release.outputs.should_release == 'true'
+        id: bump
+        run: |
+          VERSION_TYPE=${{ steps.version.outputs.version_type }}
 
-          # Reset package.json and do proper version bump with tag
-          git checkout package.json package-lock.json
+          # Bump version and create tag
+          npm version $VERSION_TYPE -m "chore(release): bump version to %s [skip ci]"
 
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "✨ New version: $NEW_VERSION"
 
       - name: Push changes and tags
+        if: steps.should_release.outputs.should_release == 'true'
         run: |
           git push origin main --follow-tags
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Create GitHub Release
+        if: steps.should_release.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.new_version }}
-          name: Release v${{ steps.version.outputs.new_version }}
+          tag_name: v${{ steps.bump.outputs.new_version }}
+          name: Release v${{ steps.bump.outputs.new_version }}
           body: |
-            ## 🚀 Release v${{ steps.version.outputs.new_version }}
+            ## 🚀 Release v${{ steps.bump.outputs.new_version }}
 
             ### Changes
             See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
 
             ### Installation
             ```bash
-            npm install flux-oriented-architecture@${{ steps.version.outputs.new_version }}
+            npm install flux-oriented-architecture@${{ steps.bump.outputs.new_version }}
             ```
 
-            ### What's Changed
-            Full Changelog: https://github.com/${{ github.repository }}/compare/v1.0.0...v${{ steps.version.outputs.new_version }}
+            ### Previous Version
+            v${{ steps.version.outputs.current_version }}
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -101,19 +146,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to NPM
+        if: steps.should_release.outputs.should_release == 'true'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Notify success
-        if: success()
+        if: steps.should_release.outputs.should_release == 'true' && success()
         run: |
-          echo "✅ Successfully released v${{ steps.version.outputs.new_version }} to NPM!"
+          echo "✅ Successfully released v${{ steps.bump.outputs.new_version }} to NPM!"
           echo "📦 Package: https://www.npmjs.com/package/flux-oriented-architecture"
-          echo "🔖 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}"
+          echo "🔖 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.bump.outputs.new_version }}"
+
+      - name: Notify skip
+        if: steps.should_release.outputs.should_release != 'true'
+        run: |
+          REASON=${{ steps.should_release.outputs.reason }}
+          echo "⏭️  Release skipped"
+          echo "Reason: $REASON"
+          if [ "$REASON" = "skip-ci" ]; then
+            echo "Commit contains [skip ci]"
+          elif [ "$REASON" = "release-commit" ]; then
+            echo "Commit is a release commit"
+          else
+            echo "Commit type does not trigger releases (only feat:, fix:, or breaking changes)"
+          fi
 
       - name: Notify failure
-        if: failure()
+        if: steps.should_release.outputs.should_release == 'true' && failure()
         run: |
           echo "❌ Release failed!"
           echo "Check the logs above for details."
