@@ -10,15 +10,25 @@ npm install flux-oriented-architecture
 
 ## Creating a New Project
 
-Use the scaffold tool to quickly set up a new project:
+You can initialize a new project in your current directory:
 
 ```bash
-npx create-foa-app my-api
+mkdir my-api
 cd my-api
+npx create-foa-app
+npm install
 npm run dev
 ```
 
+Or if you already have a project folder:
+
+```bash
+cd my-project
+npx foa init
+```
+
 This will create a basic project structure with:
+
 - `src/actions/`: Where your TypeScript business logic resides.
 - `src/flux/`: Where you define your API endpoints and their execution flow.
 - `foa.config.json`: Configuration file.
