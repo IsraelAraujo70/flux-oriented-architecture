@@ -5,6 +5,7 @@ This document describes the automated release and publishing workflow for the Fl
 ## Overview
 
 The project uses **GitHub Actions** to automatically:
+
 - Run tests and build on every push to `main`
 - Determine version bump based on commit messages
 - Create Git tags
@@ -18,6 +19,7 @@ The project uses **GitHub Actions** to automatically:
 Create an NPM access token and add it to GitHub secrets:
 
 1. **Login to NPM:**
+
    ```bash
    npm login
    ```
@@ -64,6 +66,7 @@ The workflow automatically determines version bump based on commit message forma
 ### Major Version (1.0.0 → 2.0.0)
 
 Breaking changes:
+
 ```bash
 git commit -m "feat!: remove deprecated API"
 git commit -m "BREAKING CHANGE: change plugin interface"
@@ -73,6 +76,7 @@ git commit -m "feat: add feature [breaking]"
 ### Minor Version (1.0.0 → 1.1.0)
 
 New features:
+
 ```bash
 git commit -m "feat: add PostgreSQL plugin"
 git commit -m "feat(core): add environment variables"
@@ -81,6 +85,7 @@ git commit -m "feat(core): add environment variables"
 ### Patch Version (1.0.0 → 1.0.1)
 
 Fixes and other changes:
+
 ```bash
 git commit -m "fix: resolve memory leak"
 git commit -m "docs: update README"
@@ -101,6 +106,7 @@ We follow **Conventional Commits**:
 ```
 
 ### Types:
+
 - `feat`: New feature (minor bump)
 - `fix`: Bug fix (patch bump)
 - `docs`: Documentation changes (patch bump)
@@ -112,6 +118,7 @@ We follow **Conventional Commits**:
 - `ci`: CI/CD changes (patch bump)
 
 ### Breaking Changes:
+
 - Add `!` after type: `feat!:`
 - Or include `BREAKING CHANGE:` in footer
 - Or add `[breaking]` in description
@@ -121,11 +128,13 @@ We follow **Conventional Commits**:
 ### Automatic Release (on merge to main)
 
 1. **Commit with proper message:**
+
    ```bash
    git commit -m "feat: add new database plugin"
    ```
 
 2. **Push or merge to main:**
+
    ```bash
    git push origin main
    ```
@@ -175,6 +184,7 @@ npm publish --access public
 ### `.github/workflows/release.yml`
 
 Runs on every push to `main`:
+
 - Runs tests and build
 - Bumps version based on commit message
 - Creates Git tag
@@ -184,6 +194,7 @@ Runs on every push to `main`:
 ### `.github/workflows/ci.yml`
 
 Runs on PRs and pushes:
+
 - Linting
 - Formatting checks
 - Tests with coverage
@@ -217,6 +228,7 @@ The release workflow automatically adds `[skip ci]` to version bump commits to p
 ### Logs
 
 If a release fails:
+
 1. Go to Actions tab
 2. Click on the failed workflow
 3. Check logs for each step
@@ -231,6 +243,7 @@ If a release fails:
 ### 1. Use Descriptive Commit Messages
 
 **Good:**
+
 ```bash
 feat(plugins): add PostgreSQL database plugin
 
@@ -241,6 +254,7 @@ feat(plugins): add PostgreSQL database plugin
 ```
 
 **Bad:**
+
 ```bash
 update stuff
 wip
@@ -250,6 +264,7 @@ fix
 ### 2. Group Related Changes
 
 Make one commit per logical change:
+
 ```bash
 # Good - separate commits
 git commit -m "feat: add PostgreSQL plugin"
@@ -267,6 +282,7 @@ Always ensure CI passes on your PR before merging to `main`.
 ### 4. Review Generated Releases
 
 After a release:
+
 - Check the version number is correct
 - Verify NPM package published
 - Test installation: `npm install flux-oriented-architecture@latest`
@@ -278,6 +294,7 @@ After a release:
 **Problem:** `npm ERR! code ENEEDAUTH`
 
 **Solution:**
+
 1. Generate new NPM granular access token (see setup instructions)
 2. Ensure token has "Read and write" permissions for your package
 3. Update `NPM_TOKEN` secret in GitHub
@@ -288,6 +305,7 @@ After a release:
 **Problem:** Tests don't pass on `main` branch
 
 **Solution:**
+
 1. Fix failing tests
 2. Commit with proper message
 3. Push to `main`
@@ -298,6 +316,7 @@ After a release:
 **Problem:** `npm ERR! 403 You cannot publish over the previously published versions`
 
 **Solution:**
+
 1. This shouldn't happen with automation
 2. If it does, manually bump version:
    ```bash
@@ -310,6 +329,7 @@ After a release:
 **Problem:** Tag created but no GitHub Release
 
 **Solution:**
+
 1. Check workflow logs
 2. Verify `GITHUB_TOKEN` permissions
 3. Manually create release from tag
@@ -366,16 +386,21 @@ Consider maintaining a `CHANGELOG.md` file:
 ## [1.1.0] - 2025-12-02
 
 ### Added
+
+- Init command for CLI
+- Refactored project creation workflow
 - PostgreSQL database plugin
 - Environment variables system
 - Migration runner
 
 ### Fixed
+
 - Object interpolation in return nodes
 
 ## [1.0.0] - 2025-11-01
 
 ### Added
+
 - Initial release
 - Core orchestration engine
 - CLI tools
