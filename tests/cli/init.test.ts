@@ -96,4 +96,28 @@ describe('Init Command', () => {
     expect(writtenContent.dependencies.express).toBe('^4.0.0'); // Kept existing dep
     expect(writtenContent.dependencies['flux-oriented-architecture']).toBe('latest'); // Added new dep
   });
+
+  it('should handle existing package.json without scripts or dependencies', async () => {
+    const existingPackage = {
+      name: 'minimal-project',
+      version: '0.0.1'
+    };
+
+    (fs.existsSync as jest.Mock).mockImplementation((p: string) => {
+      return p.endsWith('package.json');
+    });
+    (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(existingPackage));
+
+    registerInitCommand(program);
+    await program.parseAsync(['node', 'test', 'init']);
+
+    const writeCall = (fs.writeFileSync as jest.Mock).mock.calls.find((call) =>
+      call[0].endsWith('package.json')
+    );
+    const writtenContent = JSON.parse(writeCall[1]);
+
+    expect(writtenContent.name).toBe('minimal-project');
+    expect(writtenContent.scripts.dev).toBe('foa dev');
+    expect(writtenContent.dependencies['flux-oriented-architecture']).toBe('latest');
+  });
 });
