@@ -59,8 +59,12 @@ jobs:
 
           echo "🔼 Bumping $VERSION_TYPE version"
 
-          # Bump version and create git tag
-          npm version $VERSION_TYPE -m "chore(release): bump version to %s [skip ci]"
+          # Delete tag locally if it exists (to handle re-runs)
+          NEXT_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
+          git tag -d "v${NEXT_VERSION#v}" 2>/dev/null || true
+
+          # Reset package.json and do proper version bump with tag
+          git checkout package.json package-lock.json
 
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
