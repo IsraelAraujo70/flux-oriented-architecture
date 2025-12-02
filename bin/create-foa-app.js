@@ -54,11 +54,11 @@ if (fs.existsSync(packageJsonPath)) {
     packageJson = {
       ...existingPackageJson,
       scripts: {
-        ...existingPackageJson.scripts,
+        ...(existingPackageJson.scripts || {}),
         ...packageJson.scripts
       },
       dependencies: {
-        ...existingPackageJson.dependencies,
+        ...(existingPackageJson.dependencies || {}),
         ...packageJson.dependencies
       }
     };
