@@ -4,6 +4,7 @@ import { registerStartCommand } from './commands/start';
 import { registerValidateCommand } from './commands/validate';
 import { registerListCommand } from './commands/list';
 import { registerInitCommand } from './commands/init';
+import { registerVisualizeCommand } from './commands/visualize';
 
 export const program = new Command();
 
@@ -14,6 +15,7 @@ registerStartCommand(program);
 registerValidateCommand(program);
 registerListCommand(program);
 registerInitCommand(program);
+registerVisualizeCommand(program);
 
 export async function run() {
   await program.parseAsync(process.argv);

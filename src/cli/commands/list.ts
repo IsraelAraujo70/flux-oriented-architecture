@@ -1,26 +1,6 @@
 import { Command } from 'commander';
-import path from 'path';
-import fs from 'fs/promises';
 import { FluxLoader } from '../../core/loader';
-import { FluxConfig } from '../../types';
-
-async function loadConfig(): Promise<FluxConfig> {
-  let config: FluxConfig = {
-    server: { port: 3000 },
-    paths: { actions: 'src/actions', flux: 'src/flux' },
-    logging: { level: 'info' }
-  };
-
-  try {
-    const configPath = path.resolve(process.cwd(), 'foa.config.json');
-    const content = await fs.readFile(configPath, 'utf-8');
-    config = JSON.parse(content);
-  } catch {
-    // keep defaults
-  }
-
-  return config;
-}
+import { loadConfig } from '../config';
 
 export function registerListCommand(program: Command) {
   program

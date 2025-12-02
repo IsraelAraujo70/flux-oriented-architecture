@@ -1,8 +1,6 @@
 import { Command } from 'commander';
 import { FluxLoader } from '../../core/loader';
-import { FluxConfig } from '../../types';
-import path from 'path';
-import fs from 'fs/promises';
+import { loadConfig } from '../config';
 
 export function registerValidateCommand(program: Command) {
   program
@@ -11,21 +9,7 @@ export function registerValidateCommand(program: Command) {
     .action(async () => {
       console.log('Validating flux definitions...');
 
-      // Load config to get paths
-      let config: FluxConfig = {
-        server: { port: 3000 },
-        paths: { actions: 'src/actions', flux: 'src/flux' }
-      };
-
-      try {
-        const configPath = path.resolve(process.cwd(), 'foa.config.json');
-        const content = await fs.readFile(configPath, 'utf-8');
-        config = JSON.parse(content);
-      } catch (_e) {
-        // ignore, use defaults
-      }
-
-      const loader = new FluxLoader(config);
+      const loader = new FluxLoader(await loadConfig());
       const definitions = await loader.loadFluxDefinitions();
       const errors = loader.getFluxErrors();
 

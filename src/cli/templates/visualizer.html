@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FOA Flux Viewer</title>
+    <script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0f18;
+        --panel: #111826;
+        --grid: rgba(255, 255, 255, 0.05);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --border: #1f2937;
+        --node: #131c2c;
+        --node-border: #2b3b52;
+        --shadow: rgba(0, 0, 0, 0.35);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'Inter', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        gap: 10px 16px;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0));
+      }
+      h1 {
+        margin: 0;
+        font-size: 19px;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pill {
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.12);
+        color: var(--accent);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        color: var(--muted);
+        font-size: 13px;
+        align-items: center;
+        min-width: 0;
+      }
+      .meta strong {
+        color: var(--text);
+        margin-right: 6px;
+      }
+      .meta .value {
+        display: inline-block;
+        max-width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: bottom;
+      }
+      button {
+        background: var(--accent);
+        color: #07101f;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      main {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 420px 1fr;
+        min-height: 0;
+        height: calc(100vh - 64px);
+        background:
+          radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.06), transparent 32%),
+          radial-gradient(circle at 90% 10%, rgba(99, 102, 241, 0.05), transparent 28%), var(--bg);
+      }
+      .panel {
+        border-right: 1px solid var(--border);
+        background: #0d1422;
+        padding: 14px;
+        overflow: auto;
+        min-width: 0;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      }
+      pre {
+        margin: 0;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        color: #cbd5e1;
+        line-height: 1.4;
+        font-size: 13px;
+        white-space: pre;
+        word-break: normal;
+        overflow: auto;
+        min-width: 0;
+      }
+      #canvas-wrapper {
+        position: relative;
+        overflow: auto;
+        background-color: var(--panel);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 32px 32px;
+      }
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+      .node {
+        fill: var(--node);
+        stroke: var(--node-border);
+        stroke-width: 1.2;
+        rx: 10;
+        filter: drop-shadow(0 8px 16px var(--shadow));
+      }
+      .link {
+        fill: none;
+        stroke: #334155;
+        stroke-width: 1.6;
+      }
+      .label {
+        fill: #cbd5e1;
+        font-size: 12px;
+        font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+      .key {
+        fill: #60a5fa;
+        font-weight: 700;
+      }
+      .node.start {
+        fill: #1d4ed8;
+        stroke: #93c5fd;
+      }
+      .node.return {
+        fill: #166534;
+        stroke: #6ee7b7;
+      }
+      .node.condition {
+        fill: #312e81;
+        stroke: #a5b4fc;
+      }
+      .node.action {
+        fill: #0f172a;
+        stroke: #38bdf8;
+      }
+      .node.try {
+        fill: #7c2d12;
+        stroke: #fb923c;
+      }
+      .node.parallel {
+        fill: #115e59;
+        stroke: #34d399;
+      }
+      .node.forEach {
+        fill: #0b3b4f;
+        stroke: #67e8f9;
+      }
+      .edge-label {
+        fill: #94a3b8;
+        font-size: 11px;
+        font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+      .validation-ok {
+        color: #34d399;
+      }
+      .validation-bad {
+        color: #fca5a5;
+      }
+      .pill,
+      #title,
+      .meta,
+      button {
+        align-self: center;
+      }
+      header > .meta {
+        grid-column: 1 / 3;
+      }
+      header > button {
+        justify-self: end;
+      }
+      @media (max-width: 1100px) {
+        main {
+          grid-template-columns: 1fr;
+          grid-template-rows: 320px 1fr;
+        }
+        .panel {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+        header {
+          grid-template-columns: auto 1fr;
+          grid-template-rows: auto auto auto;
+        }
+        header > button {
+          grid-column: 2;
+          justify-self: end;
+        }
+      }
+      .errors {
+        margin-top: 10px;
+        color: #fca5a5;
+        font-size: 13px;
+        padding: 10px;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        background: rgba(252, 165, 165, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="pill">FOA Flux Viewer</div>
+      <h1 id="title">Loading...</h1>
+      <div class="meta">
+        <div><strong>File:</strong><span id="file" class="value">-</span></div>
+        <div><strong>Validation:</strong><span id="validation" class="value">pending</span></div>
+      </div>
+      <button id="copy">Copy JSON</button>
+    </header>
+    <main>
+      <section class="panel">
+        <pre id="code">Loading...</pre>
+        <div id="errors" class="errors" style="display: none"></div>
+      </section>
+      <section id="canvas-wrapper">
+        <svg id="graph"></svg>
+      </section>
+    </main>
+    <script>
+      const codeEl = document.getElementById('code');
+      const errorsEl = document.getElementById('errors');
+      const titleEl = document.getElementById('title');
+      const fileEl = document.getElementById('file');
+      const validationEl = document.getElementById('validation');
+      const svg = d3.select('#graph');
+      const LABEL_WIDTH = 180;
+
+      function buildExecutionGraph(flux) {
+        let idCounter = 0;
+        const nodes = [];
+        const edges = [];
+
+        const addNode = (type, label, details = {}) => {
+          const id = 'n' + idCounter++;
+          nodes.push({ id, type, label, details });
+          return id;
+        };
+
+        const link = (source, target, label) => {
+          if (!source || !target) return;
+          edges.push({ source, target, label });
+        };
+
+        const handleNode = (node, nextId) => {
+          switch (node.type) {
+            case 'condition': {
+              const condId = addNode('condition', node.if ? 'if ' + node.if : 'condition', node);
+              const thenStart = processFlow(node.then || [], nextId);
+              const elseStart = node.else ? processFlow(node.else, nextId) : nextId;
+              link(condId, thenStart || nextId, 'true');
+              link(condId, elseStart, node.else ? 'false' : 'next');
+              return condId;
+            }
+            case 'action': {
+              const actionId = addNode('action', node.path || 'action', node);
+              link(actionId, nextId, 'next');
+              return actionId;
+            }
+            case 'return': {
+              const label = node.status ? 'return ' + node.status : 'return';
+              const returnId = addNode('return', label, node);
+              return returnId;
+            }
+            case 'forEach': {
+              const feId = addNode('forEach', 'for ' + node.items + ' as ' + node.as, node);
+              const bodyStart = processFlow(node.do || [], feId);
+              link(feId, bodyStart, 'loop');
+              link(feId, nextId, 'next');
+              return feId;
+            }
+            case 'parallel': {
+              const pId = addNode('parallel', 'parallel ' + (node.branches?.length || 0), node);
+              (node.branches || []).forEach((branch, idx) => {
+                const branchStart = processFlow(branch, nextId);
+                link(pId, branchStart, 'branch ' + (idx + 1));
+              });
+              return pId;
+            }
+            case 'try': {
+              const tId = addNode(
+                'try',
+                node.errorVar ? 'try (err -> ' + node.errorVar + ')' : 'try',
+                node
+              );
+              const tryStart = processFlow(node.try || [], nextId);
+              const catchStart = processFlow(node.catch || [], nextId);
+              link(tId, tryStart, 'try');
+              link(tId, catchStart, 'catch');
+              return tId;
+            }
+            default: {
+              const genericId = addNode(node.type || 'node', node.type || 'node', node);
+              link(genericId, nextId, 'next');
+              return genericId;
+            }
+          }
+        };
+
+        const processFlow = (flow, nextId) => {
+          let currentNext = nextId;
+          let firstId = null;
+          for (let i = flow.length - 1; i >= 0; i--) {
+            const id = handleNode(flow[i], currentNext);
+            currentNext = id;
+            firstId = id;
+          }
+          return firstId;
+        };
+
+        const startId = addNode('start', 'start');
+        const firstFlow = processFlow(flux.flow || [], null);
+        link(startId, firstFlow, 'start');
+
+        return { nodes, edges, startId };
+      }
+
+      function computeLayout(graph) {
+        const { nodes, edges, startId } = graph;
+        const depth = {};
+        const adj = {};
+        edges.forEach((e) => {
+          (adj[e.source] = adj[e.source] || []).push(e.target);
+        });
+
+        const visit = (id, d) => {
+          if (depth[id] === undefined || d > depth[id]) depth[id] = d;
+          (adj[id] || []).forEach((target) => visit(target, d + 1));
+        };
+        visit(startId, 0);
+
+        const byDepth = {};
+        nodes.forEach((n) => {
+          const d = depth[n.id] ?? 0;
+          (byDepth[d] = byDepth[d] || []).push(n);
+        });
+
+        const spacingX = 260;
+        const spacingY = 150;
+        Object.entries(byDepth).forEach(([d, list]) => {
+          list.forEach((node, idx) => {
+            node.x = spacingX * Number(d);
+            node.y = spacingY * (idx - (list.length - 1) / 2);
+          });
+        });
+
+        return nodes;
+      }
+
+      function wrapText(textSelection, width, maxLines = 2) {
+        textSelection.each(function () {
+          const text = d3.select(this);
+          const words = (text.text() || '').split(/\s+/).filter(Boolean);
+          const x = text.attr('x');
+          const y = text.attr('y');
+          const lineHeight = 1.2; // em
+          text.text(null);
+
+          let line = [];
+          let lineNumber = 0;
+          let tspan = text.append('tspan').attr('x', x).attr('y', y).attr('dy', '0em');
+
+          const ellipsize = () => {
+            const tspans = text.selectAll('tspan').nodes();
+            if (!tspans.length) return;
+            const last = d3.select(tspans[Math.min(tspans.length - 1, maxLines - 1)]);
+            let content = last.text();
+            while (content.length && last.node().getComputedTextLength() > width) {
+              content = content.slice(0, -1);
+              last.text(content);
+            }
+            last.text((last.text() || '').replace(/\.{0,3}$/, '...'));
+            text
+              .selectAll('tspan')
+              .filter((_, i) => i >= maxLines)
+              .remove();
+          };
+
+          for (let i = 0; i < words.length; i++) {
+            line.push(words[i]);
+            tspan.text(line.join(' '));
+            if (tspan.node().getComputedTextLength() > width) {
+              if (line.length === 1) {
+                ellipsize();
+                return;
+              }
+              line.pop();
+              tspan.text(line.join(' '));
+              line = [words[i]];
+              lineNumber += 1;
+              if (lineNumber >= maxLines) {
+                ellipsize();
+                return;
+              }
+              tspan = text
+                .append('tspan')
+                .attr('x', x)
+                .attr('y', y)
+                .attr('dy', lineNumber * lineHeight + 'em')
+                .text(line.join(' '));
+            }
+          }
+        });
+      }
+
+      function renderGraph(flux) {
+        const graph = buildExecutionGraph(flux);
+        computeLayout(graph);
+
+        const nodes = graph.nodes;
+        const edges = graph.edges;
+
+        const xVals = nodes.map((d) => d.x);
+        const yVals = nodes.map((d) => d.y);
+        const minX = Math.min(...xVals, 0);
+        const maxX = Math.max(...xVals, 0);
+        const minY = Math.min(...yVals, 0);
+        const maxY = Math.max(...yVals, 0);
+
+        const margin = 160;
+        const offsetX = -minX + margin;
+        const offsetY = -minY + margin;
+
+        const width = maxX - minX + margin * 2 + 260;
+        const height = maxY - minY + margin * 2 + 200;
+
+        svg.attr('viewBox', [0, 0, width, height].join(' '));
+        svg.selectAll('*').remove();
+
+        // Links
+        svg
+          .append('g')
+          .selectAll('path')
+          .data(edges)
+          .join('path')
+          .attr('class', 'link')
+          .attr('d', (d) => {
+            const source = nodes.find((n) => n.id === d.source);
+            const target = nodes.find((n) => n.id === d.target);
+            if (!source || !target) return '';
+            const sx = source.x + offsetX;
+            const sy = source.y + offsetY;
+            const tx = target.x + offsetX;
+            const ty = target.y + offsetY;
+            const midX = (sx + tx) / 2;
+            return `M ${sx} ${sy} C ${midX} ${sy}, ${midX} ${ty}, ${tx} ${ty}`;
+          });
+
+        // Link labels
+        svg
+          .append('g')
+          .selectAll('text')
+          .data(edges.filter((e) => e.label))
+          .join('text')
+          .attr('class', 'edge-label')
+          .attr('x', (d) => {
+            const s = nodes.find((n) => n.id === d.source);
+            const t = nodes.find((n) => n.id === d.target);
+            return s && t ? (s.x + t.x) / 2 + offsetX : 0;
+          })
+          .attr('y', (d) => {
+            const s = nodes.find((n) => n.id === d.source);
+            const t = nodes.find((n) => n.id === d.target);
+            return s && t ? (s.y + t.y) / 2 + offsetY - 6 : 0;
+          })
+          .text((d) => d.label);
+
+        // Nodes
+        const node = svg
+          .append('g')
+          .selectAll('g')
+          .data(nodes)
+          .join('g')
+          .attr('transform', (d) => 'translate(' + (d.x + offsetX) + ',' + (d.y + offsetY) + ')');
+
+        node
+          .append('rect')
+          .attr('class', (d) => 'node ' + (d.type || ''))
+          .attr('x', -110)
+          .attr('y', -28)
+          .attr('width', 220)
+          .attr('height', 56);
+
+        node
+          .append('text')
+          .attr('class', 'label key')
+          .attr('dy', '-0.2em')
+          .attr('x', -98)
+          .attr('y', -4)
+          .text((d) =>
+            (d.type || 'node').length > 22
+              ? (d.type || 'node').slice(0, 19) + '...'
+              : d.type || 'node'
+          );
+
+        node
+          .append('text')
+          .attr('class', 'label')
+          .attr('dy', '1.1em')
+          .attr('x', -98)
+          .attr('y', 12)
+          .text((d) => d.label || '')
+          .call((sel) => wrapText(sel, LABEL_WIDTH, 2));
+      }
+
+      async function loadData() {
+        const res = await fetch('/data');
+        if (!res.ok) {
+          codeEl.textContent = 'Failed to load flux data: ' + res.statusText;
+          return;
+        }
+        const payload = await res.json();
+        titleEl.textContent = payload.flux.name || 'Flux';
+        fileEl.textContent = payload.file;
+        validationEl.textContent = payload.valid ? 'valid' : 'invalid';
+        validationEl.className = payload.valid ? 'validation-ok' : 'validation-bad';
+        errorsEl.style.display = payload.errors && payload.errors.length ? 'block' : 'none';
+        errorsEl.innerHTML = (payload.errors || []).map((err) => '• ' + err).join('<br>');
+        codeEl.textContent = JSON.stringify(payload.flux, null, 2);
+        renderGraph(payload.flux);
+
+        document.getElementById('copy').onclick = async () => {
+          await navigator.clipboard.writeText(JSON.stringify(payload.flux, null, 2));
+          const prev = titleEl.textContent;
+          titleEl.textContent = 'Copied!';
+          setTimeout(() => (titleEl.textContent = payload.flux.name || prev), 800);
+        };
+      }
+
+      loadData().catch((err) => {
+        codeEl.textContent = 'Error loading data: ' + err.message;
+      });
+    </script>
+  </body>
+</html>
