@@ -29,6 +29,10 @@ export async function initProject() {
     },
     dependencies: {
       'flux-oriented-architecture': 'latest'
+    },
+    devDependencies: {
+      'ts-node': '^10.9.2',
+      typescript: '^5.3.3'
     }
   };
 
@@ -44,6 +48,10 @@ export async function initProject() {
       dependencies: {
         ...(existingPackageJson.dependencies || {}),
         ...packageJson.dependencies
+      },
+      devDependencies: {
+        ...(existingPackageJson.devDependencies || {}),
+        ...packageJson.devDependencies
       }
     };
   }

@@ -44,6 +44,10 @@ let packageJson = {
   },
   dependencies: {
     'flux-oriented-architecture': 'latest'
+  },
+  devDependencies: {
+    'ts-node': '^10.9.2',
+    typescript: '^5.3.3'
   }
 };
 
@@ -60,6 +64,10 @@ if (fs.existsSync(packageJsonPath)) {
       dependencies: {
         ...(existingPackageJson.dependencies || {}),
         ...packageJson.dependencies
+      },
+      devDependencies: {
+        ...(existingPackageJson.devDependencies || {}),
+        ...packageJson.devDependencies
       }
     };
   } catch (e) {

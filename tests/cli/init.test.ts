@@ -119,5 +119,6 @@ describe('Init Command', () => {
     expect(writtenContent.name).toBe('minimal-project');
     expect(writtenContent.scripts.dev).toBe('foa dev');
     expect(writtenContent.dependencies['flux-oriented-architecture']).toBe('latest');
+    expect(writtenContent.devDependencies['ts-node']).toBeDefined();
   });
 });
