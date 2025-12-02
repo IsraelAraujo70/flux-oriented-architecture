@@ -6,6 +6,7 @@ export { FluxServer } from './core/server';
 export { FluxLoader } from './core/loader';
 export { FluxExecutor } from './core/executor';
 export { FluxValidator, validateFluxDefinition } from './core/validator';
+export { Environment, getEnvironment, resolveEnvVariables } from './core/environment';
 
 export function createFluxServer(configPath?: string) {
   return new FluxServer(configPath);

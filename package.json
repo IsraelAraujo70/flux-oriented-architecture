@@ -24,7 +24,8 @@
     "format:check": "prettier --check 'src/**/*.ts'",
     "lint": "eslint src",
     "format": "prettier --write 'src/**/*.ts'",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "dev:example:products": "npm run build && cd examples/products-api && npm install && npx ts-node ../../src/cli/index.ts dev"
   },
   "keywords": [
     "backend",
@@ -45,6 +46,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "glob": "^10.3.10",
+    "pg": "^8.16.3",
     "picocolors": "^1.0.0",
     "winston": "^3.11.0"
   },
@@ -56,6 +58,7 @@
     "@types/glob": "^8.1.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.10.6",
+    "@types/pg": "^8.15.6",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",

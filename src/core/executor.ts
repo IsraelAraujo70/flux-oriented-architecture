@@ -13,20 +13,29 @@ import {
 import { Interpolator } from './interpolator';
 import { FluxLogger } from './logger';
 import { FluxLoader } from './loader';
+import { IPlugin } from './ports/IPlugin';
 
 export class FluxExecutor {
   private interpolator: Interpolator;
   private logger: FluxLogger;
   private loader: FluxLoader;
+  private plugins: Map<string, IPlugin>;
 
-  constructor(config: FluxConfig, loader: FluxLoader) {
+  constructor(config: FluxConfig, loader: FluxLoader, plugins: Map<string, IPlugin> = new Map()) {
     this.interpolator = new Interpolator();
     this.logger = new FluxLogger(config.logging);
     this.loader = loader;
+    this.plugins = plugins;
   }
 
   async executeFlux(flux: FluxDefinition, context: FluxContext) {
     try {
+      // Inject plugins
+      context.plugins = {};
+      for (const [name, plugin] of this.plugins) {
+        context.plugins[name] = plugin.getClient();
+      }
+
       this.logger.info(`Starting flow: ${flux.method} ${flux.endpoint}`);
 
       for (const node of flux.flow) {

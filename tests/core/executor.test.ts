@@ -32,6 +32,7 @@ describe("FluxExecutor", () => {
       input: {},
       results: {},
       state: {},
+      plugins: {},
     };
     jest.clearAllMocks();
   });

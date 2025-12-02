@@ -3,12 +3,34 @@ import { FluxContext } from '../types';
 export class Interpolator {
   /**
    * Resolves expressions like "${user.id}" from the context.
+   * Supports strings, arrays, and objects (recursively).
    */
-  resolve(expression: string, context: FluxContext): any {
+  resolve(expression: any, context: FluxContext): any {
+    // Handle null/undefined
+    if (expression === null || expression === undefined) {
+      return expression;
+    }
+
+    // Handle arrays - resolve each element
+    if (Array.isArray(expression)) {
+      return expression.map((item) => this.resolve(item, context));
+    }
+
+    // Handle objects - resolve each value recursively
+    if (typeof expression === 'object') {
+      const result: Record<string, any> = {};
+      for (const [key, value] of Object.entries(expression)) {
+        result[key] = this.resolve(value, context);
+      }
+      return result;
+    }
+
+    // Handle non-string primitives (numbers, booleans)
     if (typeof expression !== 'string') {
       return expression;
     }
 
+    // Handle strings without interpolation
     if (!expression.includes('${')) {
       return expression;
     }
