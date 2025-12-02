@@ -13,8 +13,7 @@ npm install flux-oriented-architecture
 ## Quick Start
 
 ```bash
-npx create-foa-app my-api
-cd my-api
+npx create-foa-app
 npm run dev
 ```
 

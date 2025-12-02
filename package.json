@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && tsc-alias",
+    "build": "tsc && tsc-alias && node scripts/copy-templates.js",
     "dev": "ts-node src/cli/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
