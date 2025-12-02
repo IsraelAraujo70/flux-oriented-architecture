@@ -61,4 +61,35 @@ export class Interpolator {
 
     return value;
   }
+
+  /**
+   * Evaluates a logical expression string with interpolation support.
+   * Allows operators like !, &&, ||, ===, !==, >, <, etc.
+   * Example: "!${user.isActive} || ${user.age} < 18"
+   */
+  evaluateCondition(expression: string, context: FluxContext): boolean {
+    if (!expression) return false;
+
+    // If it's not a string, treat as truthy/falsy value directly
+    if (typeof expression !== 'string') {
+      return !!this.resolve(expression, context);
+    }
+
+    // 1. Extract all interpolation patterns: ${...}
+    const vars: any[] = [];
+    const processedExpression = expression.replace(/\$\{([^}]+)\}/g, (match, path) => {
+      const value = this.getValueByPath(path, context);
+      vars.push(value);
+      // Replace with reference to the vars array index
+      return `__vars[${vars.length - 1}]`;
+    });
+
+    try {
+      const evaluator = new Function('__vars', `return (${processedExpression});`);
+      return !!evaluator(vars);
+    } catch (error) {
+      console.warn(`Condition evaluation failed for "${expression}":`, error);
+      return !!this.resolve(expression, context);
+    }
+  }
 }

@@ -24,6 +24,7 @@ Flux definitions are JSON files that describe how an HTTP request should be proc
 ## Flow Nodes
 
 ### Action Node
+
 Executes a TypeScript function located in `src/actions`.
 
 ```json
@@ -36,27 +37,37 @@ Executes a TypeScript function located in `src/actions`.
   }
 }
 ```
+
 - **name**: Variable name to store the result in the context.
 - **path**: Relative path to the action file (without extension).
 - **args**: Arguments passed to the action function. Supports interpolation.
 
 ### Condition Node
-Executes branches based on a condition.
+
+Executes branches based on a condition. Supports logical operators (`!`, `&&`, `||`, `===`, `!==`, `<`, `>`, etc.).
 
 ```json
 {
   "type": "condition",
-  "if": "${userData.isActive}",
+  "if": "!${userData.isActive} || ${userData.age} < 18",
   "then": [
     { "type": "action", ... }
   ],
   "else": [
-    { "type": "return", "status": 403, "body": { "error": "Inactive user" } }
+    { "type": "return", "status": 403, "body": { "error": "Access denied" } }
   ]
 }
 ```
 
+**Supported Expressions:**
+
+- **Boolean Logic**: `!${var}`, `${a} && ${b}`, `${a} || ${b}`
+- **Comparison**: `${role} === 'admin'`, `${count} > 10`, `${status} !== 'active'`
+- **Grouping**: `(${a} || ${b}) && ${c}`
+- **Legacy**: `${booleanVar}` (checks if truthy)
+
 ### ForEach Node
+
 Iterates over an array.
 
 ```json
@@ -76,35 +87,34 @@ Iterates over an array.
 ```
 
 ### Parallel Node
+
 Executes multiple branches concurrently.
 
 ```json
 {
   "type": "parallel",
   "branches": [
-    [ { "type": "action", "path": "analytics/track" } ],
-    [ { "type": "action", "path": "notifications/send" } ]
+    [{ "type": "action", "path": "analytics/track" }],
+    [{ "type": "action", "path": "notifications/send" }]
   ]
 }
 ```
 
 ### Try/Catch Node
+
 Handles errors gracefully.
 
 ```json
 {
   "type": "try",
-  "try": [
-    { "type": "action", "path": "riskyOperation" }
-  ],
-  "catch": [
-    { "type": "return", "status": 500, "body": { "error": "Operation failed" } }
-  ],
+  "try": [{ "type": "action", "path": "riskyOperation" }],
+  "catch": [{ "type": "return", "status": 500, "body": { "error": "Operation failed" } }],
   "errorVar": "error"
 }
 ```
 
 ### Return Node
+
 Ends the flow and sends a response.
 
 ```json
@@ -121,6 +131,7 @@ Ends the flow and sends a response.
 ## Interpolation
 
 Use `${variable}` syntax to access data from the context:
+
 - `${input.email}`: Merged input (body + query + params)
 - `${input.body.email}`: Request body (deprecated, use `${input.email}`)
 - `${input.query.search}`: Query parameters (deprecated, use `${input.search}`)
@@ -164,13 +175,13 @@ import { FluxContext } from 'flux-oriented-architecture';
 
 export default async function createUser(ctx: FluxContext) {
   const { name, email } = ctx.input;
-  
+
   // Access database plugin
   const result = await ctx.plugins.db.query(
     'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
     [name, email]
   );
-  
+
   return result.rows[0];
 }
 ```
@@ -178,19 +189,23 @@ export default async function createUser(ctx: FluxContext) {
 ### Available Plugin Methods
 
 **Database (PostgreSQL):**
+
 - `ctx.plugins.db.query(sql, params)`: Execute a query
 - `ctx.plugins.db.pool`: Access the connection pool
 
 **Cache (Redis - Coming Soon):**
+
 - `ctx.plugins.cache.get(key)`: Get cached value
 - `ctx.plugins.cache.set(key, value, ttl)`: Set cached value
 - `ctx.plugins.cache.del(key)`: Delete cached value
 
 **Auth (JWT - Coming Soon):**
+
 - `ctx.plugins.auth.sign(payload)`: Generate JWT token
 - `ctx.plugins.auth.verify(token)`: Verify JWT token
 
 **Email (Coming Soon):**
+
 - `ctx.plugins.email.send(options)`: Send email
 
 ## Environment Variables
@@ -254,7 +269,7 @@ import { FluxContext } from 'flux-oriented-architecture';
 
 export default async function createProduct(ctx: FluxContext) {
   const { name, price, description } = ctx.input;
-  
+
   if (!name || !price) {
     throw new Error('Name and price are required');
   }
@@ -264,7 +279,7 @@ export default async function createProduct(ctx: FluxContext) {
     VALUES ($1, $2, $3)
     RETURNING *
   `;
-  
+
   const result = await ctx.plugins.db.query(query, [name, price, description]);
   return result.rows[0];
 }

@@ -1,0 +1,58 @@
+{
+  "name": "test-conditions",
+  "description": "Test logical conditions support",
+  "endpoint": "/test-conditions",
+  "method": "POST",
+  "flow": [
+    {
+      "type": "condition",
+      "if": "!${input.active}",
+      "then": [
+        {
+          "type": "return",
+          "status": 403,
+          "body": {
+            "message": "User is inactive",
+            "logic": "!active"
+          }
+        }
+      ]
+    },
+    {
+      "type": "condition",
+      "if": "${input.role} === 'admin' && ${input.age} >= 18",
+      "then": [
+        {
+          "type": "return",
+          "status": 200,
+          "body": {
+            "message": "Admin access granted",
+            "logic": "role === 'admin' && age >= 18"
+          }
+        }
+      ]
+    },
+    {
+      "type": "condition",
+      "if": "${input.role} === 'guest' || ${input.age} < 18",
+      "then": [
+        {
+          "type": "return",
+          "status": 200,
+          "body": {
+            "message": "Restricted access",
+            "logic": "role === 'guest' || age < 18"
+          }
+        }
+      ]
+    },
+    {
+      "type": "return",
+      "status": 200,
+      "body": {
+        "message": "Standard access",
+        "logic": "fallback"
+      }
+    }
+  ]
+}

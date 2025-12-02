@@ -41,18 +41,13 @@ export class FluxExecutor {
       for (const node of flux.flow) {
         const shouldReturn = await this.executeNode(node, context);
         if (shouldReturn) {
-          // If executeNode returns true (signaling a return action was executed), we stop the flow.
-          // However, the ReturnNode logic handles sending the response.
-          // We just need to break the loop.
           break;
         }
-        // Check if response was already sent by a return node or manual intervention
         if (context.res.headersSent) {
           break;
         }
       }
 
-      // If we reached the end and no response sent, send 200 OK with last result or empty
       if (!context.res.headersSent) {
         context.res.status(200).send({ success: true });
       }
@@ -116,15 +111,13 @@ export class FluxExecutor {
 
     this.logger.debug(`Action completed: ${node.name} (${duration}ms)`);
 
-    // Store result for downstream nodes
     context.results[node.name] = result;
-    // Convenience: also expose directly on context to allow "${foo}" style
     context[node.name] = result;
     delete context.args;
   }
 
   private async executeCondition(node: ConditionNode, context: FluxContext) {
-    const condition = this.interpolator.resolve(node.if, context);
+    const condition = this.interpolator.evaluateCondition(node.if, context);
     this.logger.debug(`Condition: ${node.if} = ${condition}`);
 
     if (condition) {
@@ -161,9 +154,6 @@ export class FluxExecutor {
 
   private async executeParallel(node: ParallelNode, context: FluxContext) {
     const promises = node.branches.map(async (branch) => {
-      // Create a shallow copy of context for isolation if needed?
-      // For now, sharing context but beware of race conditions on writes.
-      // Ideally parallel branches should be read-heavy or write to distinct keys.
       for (const n of branch) {
         if (await this.executeNode(n, context)) return;
       }
