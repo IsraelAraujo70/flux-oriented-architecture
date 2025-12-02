@@ -1,0 +1,21 @@
+{
+  "name": "create-product",
+  "description": "Create a new product",
+  "endpoint": "/products",
+  "method": "POST",
+  "flow": [
+    {
+      "type": "action",
+      "name": "newProduct",
+      "path": "product/createProduct"
+    },
+    {
+      "type": "return",
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": "${newProduct}"
+      }
+    }
+  ]
+}

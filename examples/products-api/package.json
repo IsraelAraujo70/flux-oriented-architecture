@@ -1,0 +1,22 @@
+{
+  "name": "products-api",
+  "version": "1.0.0",
+  "description": "Example Products API using Flux-Oriented Architecture",
+  "private": true,
+  "scripts": {
+    "dev": "foa dev",
+    "start": "foa start",
+    "validate": "foa validate",
+    "list": "foa list",
+    "migrate": "node scripts/migrate.js"
+  },
+  "dependencies": {
+    "flux-oriented-architecture": "file:../..",
+    "dotenv": "^16.3.1",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  }
+}
