@@ -1,6 +1,6 @@
 {
   "name": "flux-oriented-architecture",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend framework with declarative flow orchestration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
