@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs/promises';
@@ -8,6 +9,7 @@ import { FluxLogger } from './logger';
 import { PostgresPlugin } from '../plugins/database/postgres';
 import { IPlugin } from './ports/IPlugin';
 import { resolveEnvVariables } from './environment';
+import { buildCorsOptions } from './cors';
 
 export class FluxServer {
   private app: express.Application;
@@ -72,6 +74,11 @@ export class FluxServer {
 
     if (options?.port) {
       this.config.server.port = Number(options.port);
+    }
+
+    const corsOptions = buildCorsOptions(this.config.server.cors);
+    if (corsOptions) {
+      this.app.use(cors(corsOptions));
     }
 
     // 1. Load actions

@@ -5,6 +5,7 @@ FOA provides built-in support for environment variables, allowing you to configu
 ## Overview
 
 The environment system automatically:
+
 - Loads variables from `.env` files
 - Interpolates `${VAR_NAME}` placeholders in configuration
 - Prioritizes system environment variables over file values
@@ -66,6 +67,28 @@ Use `${VAR_NAME}` syntax in `foa.config.json`:
 }
 ```
 
+### CORS configuration with env vars
+
+```json
+{
+  "server": {
+    "port": 3001,
+    "cors": {
+      "origin": ["${APP_BASE_URL}", "https://production.com"],
+      "credentials": true,
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      "allowedHeaders": ["Content-Type", "Authorization"],
+      "exposedHeaders": ["X-Request-Id"],
+      "maxAge": 86400
+    }
+  }
+}
+```
+
+- `origin` aceita string, array ou `true` para permitir qualquer origem; interpolação funciona dentro de arrays.
+- Se `credentials` for `true` e `origin` não for definido, o FOA reflete a origem da requisição (não usa `*`).
+- `methods` tem padrão `GET, HEAD, PUT, PATCH, POST, DELETE` quando não informado.
+
 ### In Action Code
 
 Access environment variables directly in your actions:
@@ -76,13 +99,13 @@ import { FluxContext } from 'flux-oriented-architecture';
 export default async function callExternalAPI(ctx: FluxContext) {
   const apiUrl = process.env.API_BASE_URL;
   const apiKey = process.env.API_KEY;
-  
+
   const response = await fetch(`${apiUrl}/data`, {
     headers: {
-      'Authorization': `Bearer ${apiKey}`
+      Authorization: `Bearer ${apiKey}`
     }
   });
-  
+
   return response.json();
 }
 ```
@@ -125,7 +148,7 @@ When a placeholder is the entire value, it's replaced with the actual type:
 
 ```json
 {
-  "port": "${PORT}",           // If PORT=3000 → returns number 3000
+  "port": "${PORT}", // If PORT=3000 → returns number 3000
   "enabled": "${ENABLE_CACHE}" // If ENABLE_CACHE=true → returns boolean true
 }
 ```
@@ -136,7 +159,7 @@ When embedded in a string, values are converted to strings:
 
 ```json
 {
-  "message": "Server on port ${PORT}"  // Returns: "Server on port 3000"
+  "message": "Server on port ${PORT}" // Returns: "Server on port 3000"
 }
 ```
 
@@ -166,11 +189,7 @@ Interpolation works in array elements:
 
 ```json
 {
-  "allowedOrigins": [
-    "${FRONTEND_URL}",
-    "${ADMIN_URL}",
-    "https://app.example.com"
-  ]
+  "allowedOrigins": ["${FRONTEND_URL}", "${ADMIN_URL}", "https://app.example.com"]
 }
 ```
 
@@ -295,13 +314,13 @@ SMTP_PASS=password
 ```typescript
 export default async function startup(ctx: FluxContext) {
   const required = ['DATABASE_URL', 'JWT_SECRET'];
-  
+
   for (const varName of required) {
     if (!process.env[varName]) {
       throw new Error(`Missing required environment variable: ${varName}`);
     }
   }
-  
+
   return { validated: true };
 }
 ```
@@ -354,7 +373,8 @@ WEBHOOK_URL=https://webhook.example.com/events
 
 **Problem**: `Environment variable "DATABASE_URL" is not defined`
 
-**Solution**: 
+**Solution**:
+
 - Verify the `.env` file exists in project root
 - Check the variable name spelling
 - Ensure the file is properly formatted (KEY=value)
@@ -364,6 +384,7 @@ WEBHOOK_URL=https://webhook.example.com/events
 **Problem**: Config shows `${DATABASE_URL}` literally
 
 **Solution**:
+
 - Make sure you're using the FOA server (it auto-loads env)
 - Check that `.env` file has the variable defined
 - Verify no typo in variable name
@@ -373,6 +394,7 @@ WEBHOOK_URL=https://webhook.example.com/events
 **Problem**: Environment variables aren't being picked up
 
 **Solution**:
+
 - Ensure `.env` is in the correct directory (project root)
 - Check file permissions (must be readable)
 - Restart the server after changing `.env`
@@ -418,6 +440,7 @@ const allEnv = process.env;
 ### Complete Setup
 
 **`.env`:**
+
 ```env
 DATABASE_URL=postgresql://admin:pass@localhost:5432/myapp
 REDIS_URL=redis://localhost:6379
@@ -426,6 +449,7 @@ PORT=3000
 ```
 
 **`foa.config.json`:**
+
 ```json
 {
   "server": {
@@ -449,6 +473,7 @@ PORT=3000
 ```
 
 **Action using env:**
+
 ```typescript
 import { FluxContext } from 'flux-oriented-architecture';
 
